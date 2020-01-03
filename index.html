@@ -43,17 +43,12 @@
     <script src="https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/authing-js-sdk"></script>
     <script>
-      const auth = new Authing({
-        clientId: "5c95905578fce5000166f853",
+      const authing = new Authing({
+        userPoolId: "5c95905578fce5000166f853",
         timestamp: Math.round(new Date() / 1000),
         nonce: Math.ceil(Math.random() * Math.pow(10, 6))
       });
-      auth.then(authing => {
-        // authing.login
-        // authing.register
-        // ...
-        window.validAuth = authing;
-      });
+      window.validAuth = authing;
     </script>
     <script>
       window.isMFAShow = false;
