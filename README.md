@@ -1,6 +1,6 @@
 # mfa-demo
 
-Implement user login form and MFA with Authing by hand.
+为 Authing 的 MFA 二次认证定制化开发登录界面。
 
 ## 安装 http-server
 
