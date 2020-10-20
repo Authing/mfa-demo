@@ -3,5 +3,5 @@ Implement user login form and MFA with Authing by hand.
 
 参考文档：
 
-1. 配置 MFA：https://docs.authing.cn/authing/mfa/configure-mfa
-2. 集成 MFA：https://docs.authing.cn/authing/mfa/integrate-mfa
+1. 开启 MFA 口令二次认证：https://docs.authing.cn/mfa/configure-mfa/
+2. 接入 MFA：https://docs.authing.cn/mfa/integrate-mfa.html
