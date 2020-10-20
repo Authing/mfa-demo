@@ -1,147 +1,138 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Document</title>
-    <style type="text/css">
-      .row {
-        margin-bottom: 8px;
-      }
-    </style>
+    <title>Authing MFA Example</title>
   </head>
   <body>
-    <div class="row">
-      <label>用户名：<input id="username"/></label>
-      <label>密码：<input id="password"/></label>
-      <label>验证码：<input id="verify-code"/><img id="verify-img" style="vertical-align: bottom;"/></label>
+    <div>
+      <label for="email">邮箱：</label>
+      <input id="email" />
     </div>
-    <div id="mfa" style="visibility: hidden;" class="row">
-      <label>MFA 口令：<input type="number" id="mfa-code"/></label>
+    <div>
+      <label for="password">密码：</label>
+      <input id="password" type="password" />
     </div>
-    <div class="row">
-      <input type="button" value="登录" id="login" onclick="handleLogin()" />
-      <input
-        type="button"
-        value="注册"
-        id="register"
-        onclick="handleRegister()"
-      />
-      <input
-        type="button"
-        value="开启 MFA"
-        id="register"
-        onclick="handleChangeMFA()"
-      />
+    <div id="login-mfa-container" style="display: none">
+      <div id="welcome"></div>
+      <label for="mfa">MFA 口令：</label>
+      <input id="mfa" type="password" />
+      <button id="confirm-login">确认登录</button>
     </div>
-    <div id="qrcode" class="row"></div>
-    <div id="qrcode-info" style="visibility: hidden;" class="row">
-      请使用 MFA 令牌管理工具扫码添加令牌
+    <div>
+      <button id="login">登录</button>
+      <button id="register">注册</button>
+      <button id="bind-mfa">绑定 MFA</button>
+      <button id="delete-mfa">解绑 MFA</button>
     </div>
-    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/authing-js-sdk"></script>
+    <div id="mfa-qrcode-container"></div>
+    <div id="mfa-confirm-container" style="display: none">
+      <label for="mfa-code">MFA 确认口令：</label>
+      <input id="mfa-code" />
+      <button id="confirm">确认绑定</button>
+    </div>
+    <!-- 引入 axios 用于发送 HTTP 请求，引入 authing-js-sdk -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/authing-js-sdk@3.21.5/dist/authing-js-sdk-browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.20.0/dist/axios.min.js"></script>
     <script>
-      const authing = new Authing({
-        userPoolId: "5c95905578fce5000166f853",
-        timestamp: Math.round(new Date() / 1000),
-        nonce: Math.ceil(Math.random() * Math.pow(10, 6))
-      });
-      window.validAuth = authing;
-    </script>
-    <script>
-      window.isMFAShow = false;
-      function showMFAInput() {
-        isMFAShow = true;
-        document.getElementById("mfa").style.visibility = "visible";
-      }
-      // 开启用户的 MFA
-      async function handleChangeMFA() {
-        let username = document.getElementById("username").value;
-        let password = document.getElementById("password").value;
-        let verifyCode = document.getElementById("verify-code").value;
-
+      window.userPoolId = '5cce4aa83ed9f97b4dfd95f0';
+      window.authing = new Authing({ userPoolId: '5cce4aa83ed9f97b4dfd95f0' });
+      $('#register').on('click', async (e) => {
+        const email = $('#email').val();
+        const password = $('#password').val();
         try {
-          let res = await validAuth.login({
-            email: username,
-            password: password,
-            verifyCode: verifyCode
-          });
-          // 或者使用用户的 token 初始化
-          // authing.initUserClient('用户的 JWT token');
-          let mfa = await validAuth.changeMFA({
-            userId: res._id,
-            userPoolId: "5c95905578fce5000166f853",
-            enable: true
-          });
-          alert(JSON.stringify(mfa));
-          jQuery("#qrcode").qrcode(
-            `otpauth://totp/Authing:Test?secret=${mfa.shareKey}&period=30&digits=6&issuer=Authing`
-          );
-          document.getElementById("qrcode-info").style.visibility = "visible";
+          await window.authing.register({ email, password });
+          alert(`注册成功，账号：${email}，密码：${password}`);
         } catch (err) {
-          alert("失败消息：" + JSON.stringify(err));
+          alert(err.message.message);
         }
-      }
-      // 使用随机信息注册一个用户
-      async function handleRegister() {
-        let rand = Math.random()
-          .toString(36)
-          .slice(2);
-        let res = await validAuth.register({
-          email: rand + "@test.com",
-          password: "123456"
-        });
-        alert(JSON.stringify(res));
-        document.getElementById("username").value = res.email;
-        document.getElementById("password").value = "123456";
-        window.userId = res._id;
-      }
-      // 登录逻辑
-      async function handleLogin() {
-        // validAuth.login({email: })
-        let username = document.getElementById("username").value;
-        let password = document.getElementById("password").value;
-        let verifyCode = document.getElementById("verify-code").value;
-        if (isMFAShow) {
-          let MFACode = document.getElementById("mfa-code").value;
-          try {
-            let res = await validAuth.login({
-              email: username,
-              password: password,
-              MFACode: MFACode,
-              verifyCode: verifyCode
-            });
-            alert("成功消息：" + JSON.stringify(res));
-          } catch (err) {
-            alert("失败消息：" + JSON.stringify(err));
-            if(err.message.code === 2000 || err.message.code === 2001 || err.message.code === 2006) {
-              console.log(err.message.data.url)
-              document.getElementById("verify-img").src = err.message.data.url
-            }
+      });
+      $('#confirm-login').on('click', async (e) => {
+        const totp = $('#mfa').val();
+        const result = await axios.post(
+          'https://core.authing.cn/api/v2/mfa/totp/verify',
+          { totp },
+          {
+            headers: {
+              authorization: window.mfaToken,
+              'x-authing-userpool-id': userPoolId,
+            },
           }
+        );
+        if (result.data.code === 200) {
+          alert(`登录成功，信息：${JSON.stringify(result.data.data)}`);
+          window.user = result.data.data;
         } else {
-          try {
-            let res = await validAuth.login({
-              email: username,
-              password: password,
-              verifyCode: verifyCode
-            });
-            alert("成功消息：" + JSON.stringify(res));
-          } catch (err) {
-            alert("失败消息：" + JSON.stringify(err));
-
-            if (err.message.code === 1635) {
-              showMFAInput();
-            }
-            if(err.message.code === 2000 || err.message.code === 2001 || err.message.code === 2006) {
-              console.log(err.message.data.url)
-              document.getElementById("verify-img").src = err.message.data.url
-            }
-          }
+          alert(result.data.message);
         }
-      }
+      });
+      $('#login').on('click', async (e) => {
+        const email = $('#email').val();
+        const password = $('#password').val();
+        try {
+          window.user = await window.authing.login({ email, password });
+          alert(`登录成功，信息：${JSON.stringify(window.user)}`);
+        } catch (err) {
+          if (err.message.code === 1635) {
+            $('#welcome').html(`你好，${err.message.data.email}，头像：<img width="50" src="${err.message.data.avatar}">`);
+            $('#login-mfa-container').css('display', 'block');
+            window.mfaToken = err.message.data.mfaToken;
+          }
+          alert(err.message.message);
+        }
+      });
+
+      $('#bind-mfa').on('click', async (e) => {
+        if (!window.user) {
+          alert('请先完成登录');
+          return;
+        }
+        const userPoolId = '5cce4aa83ed9f97b4dfd95f0';
+        const result = await axios.post(
+          'https://core.authing.cn/api/v2/mfa/totp/associate',
+          { authenticator_type: 'totp' },
+          {
+            headers: {
+              authorization: window.user.token,
+              'x-authing-userpool-id': userPoolId,
+            },
+          }
+        );
+        const { secret, recovery_code, qrcode_data_url, qrcode_uri, authenticator_type } = result.data;
+        $('#mfa-qrcode-container').html(`<img src="${qrcode_data_url}"><p>恢复代码，MFA 口令丢失时使用：${recovery_code}</p>`);
+        $('#mfa-confirm-container').css('display', 'block');
+      });
+      $('#confirm').click(async (e) => {
+        const totp = $('#mfa-code').val();
+        const userPoolId = '5cce4aa83ed9f97b4dfd95f0';
+        const result = await axios.post(
+          'https://core.authing.cn/api/v2/mfa/totp/associate/confirm',
+          { authenticator_type: 'totp', totp },
+          {
+            headers: {
+              authorization: window.user.token,
+              'x-authing-userpool-id': userPoolId,
+            },
+          }
+        );
+        alert(result.data.message);
+      });
+      $('#delete-mfa').click(async (e) => {
+        if (!window.user) {
+          alert('请先完成登录');
+          return;
+        }
+        const result = await axios.delete('https://oidc1.authing.cn/api/v2/mfa/totp/associate', {
+          headers: {
+            authorization: window.user.token,
+            'x-authing-userpool-id': userPoolId,
+          },
+        });
+        alert(result.data.message);
+      });
     </script>
   </body>
 </html>
