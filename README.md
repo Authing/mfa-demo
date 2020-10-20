@@ -2,6 +2,11 @@
 
 为 Authing 的 MFA 二次认证定制化开发登录界面。
 
+## 运行效果
+
+本项目包含了注册、处理一次认证、欢迎页面、处理二次认证、绑定 MFA、解绑 MFA 的逻辑。
+![](https://cdn.authing.cn/docs/20201020220606.png)
+
 ## 安装 http-server
 
 ```shell
